@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="{{ settings.author }}">
+
+    <title>{{ title }}</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="{{ theme.url }}/css/bootstrap-3.0.0.css" rel="stylesheet">
+
+    <!-- Custom CSS for the 'Thumbnail Gallery' Template -->
+    <link href="{{ theme.url }}/css/thumbnail-gallery.css" rel="stylesheet">
+
+    <!-- FancyBox library -->
+    <link rel="stylesheet" href="{{ theme.url }}/css/fancybox/jquery.fancybox-2.1.5.css" type="text/css" media="screen" />
+    <link rel="stylesheet" href="{{ theme.url }}/js/helpers/jquery.fancybox-buttons.css" type="text/css" media="screen" />
+  </head>
+
+  <body>
+    <nav class="navbar navbar-fixed-top navbar-inverse" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="{{ index_url }}">{{ index_title }}</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+          <ul class="nav navbar-nav">
+	    {% if settings.links %}
+              {% for title, link in settings.links %}
+              <li><a href="{{ link }}">{{ title }}</a></li>
+              {% endfor %}
+          {% endif %}
+          </ul>
+        </div><!-- /.navbar-collapse -->
+      </div><!-- /.container -->
+    </nav>
+    
+    <div class="container">
+
+      <div class="row">
+      
+        <div class="col-lg-12">
+	    {% if breadcrumb %}
+	      <h2>
+		{%- for url, title in breadcrumb -%}
+		<a href="{{ url }}">{{ title }}</a>
+		{%- if not loop.last %} » {% endif -%}
+		{% endfor -%}
+	      </h2>
+	      {% if meta and meta.date %}
+		<p>Date: {{ meta.date[0] }}</p>
+	      {% endif %}
+	      <hr>
+	    {% else %}
+	      <h1 class="page-header">All Pictures</h1>
+	    {% endif %}
+        </div>
+	
+	<div class="col-lg-12">
+	  {% if description %}
+	  <div class="lead">{{ description }}</div>
+	  {% endif %}
+	</div>
+	
+	{% if settings.googlemaps_key and needs_map%}
+	<div class="col-lg-12 map">
+	  <div id="map-canvas" style="width:100%; height:500px"></div>
+	  <div class="caption">Zoom in to see individual images(Switch to satellite view to zoom further)</div>
+	</div>
+	{% endif %}
+	
+	{% if albums %}
+        {% for album in albums %}
+	<div class="col-lg-3 col-md-4 col-xs6 thumb">
+	  <a class="thumbnail" href="{{ album.url }}">
+	    <img src="{{ album.thumb }}" class="img-responsive"
+		 alt="{{ album.name }}" title="{{ album.name }}" />
+	    <div class="caption"><p>{{ album.title }}
+	    {% if album.date %}{{ album.date }}{% endif %}<br></p></div>
+	  </a>
+	</div>
+        {% endfor %}
+        {% endif %}
+	
+	
+	{% macro img_description(media) -%}
+	  {% if media.big %} data-big="{{ media.big }}"{% endif %}
+	  {% if media.exif %}
+	    {% if media.exif.datetime %} data-date="{{ media.exif.datetime }}" {% endif %}
+	  {% endif %}
+	{%- endmacro %}
+	{% for media in medias %}
+          {% if media.type == "img" %}
+	    <div class="col-lg-3 col-md-6 col-xs6 thumb">
+	      <div class="thumbnail">
+		<a class="fancybox" rel="media" href="{{ media.file }}" title="{{ media.file }}" {{ img_description(media) }}>
+		  <img class="img-responsive thumbimg lazy" alt="{{ media.file }}" title="{{ media.file }}"
+		  data-original="{{ media.thumb }}" src="{{ theme.url }}/blank.gif"/>
+		  <noscript>
+		    <img class="img-responsive thumbimg" alt="{{ media.file }}" title="{{ media.file }}"
+		         src="{{ media.thumb }}"/>
+		  </noscript>
+		</a>
+		<div class="caption">
+		    {% if media.exif.gps %}
+		      <a href="#" onclick="focusMarker('{{media.file}}'); return false;">Show on Map</a>
+		    {% else %}
+		    <span>&nbsp;</span>
+		    {% endif %}
+		</div>
+	      </div>
+	    </div>
+	  {% endif %}
+
+	  {% if media.type == "vid" %}
+              <div class="col-lg-3 col-md-6 cols-xs6 thumb">
+		<div class="thumbnail">
+		  <a href="#{{ media.file|replace('.', '') }}" class="fancybox" rel="media"
+		    title="{{ media.file }}"
+		    {{ img_description(media) }}>
+		    <img class="img-responsive thumbimg lazy" alt="{{ media.file }}" title="{{ media.file }}"
+		    data-original="{{ media.thumb }}" src="{{ theme.url }}/blank.gif"/>
+		    <noscript>
+		      <img class="img-responsive thumbimg" alt="{{ media.file }}" title="{{ media.file }}"
+			   src="{{ media.thumb }}"/>
+		    </noscript>
+		  </a>
+		  <div class="caption">Video</div>
+		</div>
+              </div>
+              <!-- This contains the hidden content for the video -->
+              <div style='display:none'>
+                <div id="{{ media.file|replace('.', '') }}">
+                  <video controls preload="none" width="800" height="450"
+		  poster="{{ media.thumb }}">
+                  <source src='{{ media.file }}' type='video/webm' />
+                  </video>
+                </div>
+              </div>
+            {% endif %}
+	{% endfor %}
+      </div>
+      
+      <hr>
+
+      <footer>
+        <div class="row">
+          <div class="col-lg-12">
+            <p>Copyright &copy; {{ settings.author }} &middot; Generated by <a href="{{ sigal_link }}">sigal</a></p>
+          </div>
+        </div>
+      </footer>
+      
+    </div><!-- /.container -->
+
+  <!-- javascript -->
+  <script src="{{ theme.url }}/js/jquery-1.10.2.js"></script>
+  <script src="{{ theme.url }}/js/bootstrap-3.0.0.js"></script>
+
+  <!-- lazyload images -->
+  <script src="{{ theme.url }}/js/jquery.lazyload-1.9.0.js" type="text/javascript"></script>
+
+  <!-- fancybox -->
+  <script src="{{ theme.url }}/js/jquery.fancybox-2.1.5.js"></script>
+  <script type="text/javascript" src="{{ theme.url }}/js/helpers/jquery.fancybox-buttons.js"></script>
+  <script type="application/x-javascript">
+    $.fn.hasAttr = function(name) {  
+      return this.attr(name) !== undefined;
+    };
+
+    $(document).ready(function() {
+      $('img.lazy').css('display', 'block').lazyload();
+      $(".fancybox").fancybox({
+	afterLoad: function () {
+	  tmp_title = this.title;
+	  if($(this.element).hasAttr("data-date")) {
+	    tmp_title += " &middot; " + $(this.element).attr("data-date");
+	  }
+	  if( $(this.element).hasAttr("data-big")) {
+	    tmp_title += " &middot; <a href=\"" + $(this.element).attr("data-big") + "\" target=\"_blank\">Download Original</a>";
+	  }
+	  this.title = tmp_title;
+	},
+	helpers: {
+	  title: {
+	    type: "inside"
+	  }
+	}
+      });
+    });
+  </script>
+  
+  {% if settings.googlemaps_key and needs_map %}
+    {% if settings.googlemaps_key %}
+    <script type="text/javascript"
+      src="https://maps.googleapis.com/maps/api/js?key={{ settings.googlemaps_key }}&sensor=false">
+    </script>
+    {% else %}
+      <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?sensor=false"></script>
+    {% endif %}
+    <script type="application/x-javascript" src="{{ theme.url }}/js/markerclusterer-1.0.2.js"></script>
+    <script type="application/x-javascript">
+      google.maps.visualRefresh = true;
+      var markers = {};
+      function initialize() {
+	var mapOptions = {
+	  zoom: 14,
+	  mapTypeId: google.maps.MapTypeId.TERRAIN,
+	  keyboardShortcuts: false,
+	};
+	var map = new google.maps.Map(document.getElementById("map-canvas"), mapOptions);
+	
+	var infowindow = new google.maps.InfoWindow();
+	var prev = null;
+	var bound = new google.maps.LatLngBounds();
+	{% for media in medias %}
+	  {% if media.exif and media.exif.gps %}
+	    var latlng = new google.maps.LatLng({{media.exif.gps.lat}}, {{media.exif.gps.lon}});
+	    bound.extend(latlng);
+	    var marker = new google.maps.Marker({
+	      position: latlng
+	    });
+	    makeInfoWindowEvent(map, infowindow,
+				'<a href="{{ media.file }}" class="fancybox" title="{{ media.file }}" {{ img_description(media) }}>' +
+				'<img src="{{ media.thumb }}" alt="{{ media.file }}"' +
+				'title="' + "{{ media.file }}" + '" /></a>"' +
+				"<br><p>{{ media.file }}</p>",
+				marker);
+	    markers["{{media.file}}"] = marker;
+	    if (prev) {
+	      marker.prev = prev;
+	      prev.next = marker;
+	    }
+	    prev = marker;
+	  {% endif %}
+	{% endfor %}
+	
+	/* Add markers for any albums */
+	{% for album in albums %}
+	  {% if album.location %}
+	    var latlng = new google.maps.LatLng({{album.location}});
+	    bound.extend(latlng);
+	    var marker = new google.maps.Marker({
+	      position: latlng
+	    });
+	    makeInfoWindowEvent(map, infowindow,
+				'<a href="{{ album.url }}">'+
+				'<img src="{{ album.thumb }}" class="album_thumb"'+
+				'     alt="{{ album.name }}" title="{{ album.name }}" /></a><br>'+
+				'<span class="album_title">' + "{{ album.title }}" +
+				{% if album.date %}" - {{ album.date }}" +{% endif %}
+				'</span>',
+				marker);
+	    markers["{{album.url}}"] = marker;
+	    if (prev) {
+	      marker.prev = prev;
+	      prev.next = marker;
+	    }
+	    prev = marker;
+	  {% endif %}
+	{% endfor %}
+	
+	map.setCenter(bound.getCenter());
+	map.fitBounds(bound);
+	var markerCluster = new MarkerClusterer(map, $.map(markers, function(v,k){return v}), {maxZoom:14});
+	
+	function makeInfoWindowEvent(map, infowindow, contentString, marker) {
+	  google.maps.event.addListener(marker, 'click', function() {
+	    infowindow.setContent(contentString);
+	    infowindow.open(map, marker);
+	  })
+	}
+      }
+      function focusMarker(markername) {
+	new google.maps.event.trigger(markers[markername], 'click');
+	document.getElementById("map-canvas").scrollIntoView();
+      }
+      google.maps.event.addDomListener(window, 'load', initialize);
+    </script>
+  {% endif %}
+  {% include 'analytics.html' %}
+  </body>
+</html>

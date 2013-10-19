@@ -147,6 +147,7 @@ class Writer(object):
         if len(paths[relpath]['medias']) > 0 and self.settings['zip_gallery']:
             ctx['zip_gallery'] = self.settings['zip_gallery']
 
+        needs_map = False
         for i in paths[relpath]['medias']:
             media_ctx = {}
             base, ext = os.path.splitext(i)
@@ -158,6 +159,8 @@ class Writer(object):
                 raw, simple = sigal.image.get_exif_tags(file_path)
                 media_ctx['raw_exif'] = raw
                 media_ctx['exif'] = simple
+                if 'gps' in simple:
+                    needs_map = True
             else:
                 media_ctx['type'] = 'vid'
                 media_ctx['file'] = base + '.webm'
@@ -172,6 +175,15 @@ class Writer(object):
             thumb_name = get_thumb(self.settings, alb_thumb)
             thumb_path = os.path.join(self.output_dir, dpath, thumb_name)
             self.logger.debug("Thumbnail path : %s", thumb_path)
+
+            location = None
+            if 'location' in paths[dpath]['meta']:
+                location = paths[dpath]['meta']['location'][0]
+                needs_map = True
+
+            date = None
+            if 'date' in paths[dpath]['meta']:
+                date = paths[dpath]['meta']['date'][0]
 
             # generate the thumbnail if it is missing (if
             # settings['make_thumbs'] is False)
@@ -190,8 +202,12 @@ class Writer(object):
             ctx['albums'].append({
                 'url': d + '/' + self.url_ext,
                 'title': paths[dpath]['title'],
-                'thumb': os.path.join(d, thumb_name)
+                'thumb': os.path.join(d, thumb_name),
+                'location': location,
+                'date': date
             })
+
+        ctx['needs_map'] = needs_map
 
         return ctx
 
